@@ -32,17 +32,17 @@ batch_size = 64
 input_dim=28
 kernel_size=4
 stride=2
-latent_dim=49
+latent_dim=20
 
 class VAE(nn.Module):
     def __init__(self):
         super(VAE, self).__init__()
-        self.fc1 = nn.Conv2d(3,32,kernel_size,stride)
+        self.fc1 = nn.Conv2d(1,32,kernel_size,stride)
 #        self.fc2 = nn.Conv2d(32,64,4,2)
         self.fc21 = nn.Linear(int(((input_dim-kernel_size)/stride+1)**2),latent_dim) # mean
         self.fc22 = nn.Linear(int(((input_dim-kernel_size)/stride+1)**2),latent_dim) # variance
         self.fc3 = nn.Linear(latent_dim,int(((input_dim-kernel_size)/stride+1)**2))
-        self.fc4 = nn.ConvTranspose2d(32, 3, kernel_size, stride)
+        self.fc4 = nn.ConvTranspose2d(32, 1, kernel_size, stride)
 
     def encode(self, x):
         h1 = F.sigmoid(self.fc1(x))
@@ -79,6 +79,7 @@ def train(model, optimizer, epochs, device):
     model.train()
     for epoch in range(epochs):
         overall_loss = 0
+        u=0
         for batch_idx, (x, _) in enumerate(train_loader):
             x = x.to(device)
             optimizer.zero_grad()
@@ -86,7 +87,8 @@ def train(model, optimizer, epochs, device):
             
             loss = loss_function(x, x_hat, mean, log_var)
             overall_loss += loss.item()
-            print(batch_idx/len(train_loader), overall_loss)
+            if u%5000==0:
+                print(batch_idx/len(train_loader), overall_loss)
             loss.backward()
             optimizer.step()
 
@@ -96,10 +98,10 @@ def train(model, optimizer, epochs, device):
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model = VAE()
-optimizer = optim.Adam(model.parameters(), lr=1e-5)
+optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
 #%%
-train(model, optimizer, epochs=1, device=device)  
+train(model, optimizer, epochs=3, device=device)  
 #%%
 # convert the tensors to numpy arrays and reshape them into images
 import random
@@ -118,6 +120,7 @@ axes[1].imshow(recon_image, cmap='gray')
 axes[1].set_title("Reconstructed")
 plt.show()
 #%% test visuel
+images,labels=iter(train_loader).next()
 k=18
 i1 = images[k]
 i1.numpy()
@@ -133,3 +136,22 @@ p1 = p1.transpose(1,2,0)
 plt.imshow(p1)
 plt.show()
 
+#%%
+data=iter(train_loader)
+images,labels=data.next()
+#%%
+
+k=18
+i1 = images
+i1.numpy()
+i1 = np.transpose(i1, (1, 2, 0))
+plt.imshow(i1)
+plt.show()
+
+
+pred = model(images)
+p1 = pred[k]
+p1 = p1.detach().numpy()
+p1 = p1.transpose(1,2,0)
+plt.imshow(p1)
+plt.show()
