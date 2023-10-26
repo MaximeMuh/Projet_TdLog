@@ -16,16 +16,24 @@ transform = transforms.Compose([
     transforms.Resize((128, 128)),
     transforms.ToTensor()
 ])
-#%%
-train_set = datasets.ImageFolder(root=folder_path, transform=transform)
+
+
+batch_size=64
+
+
+transform = transforms.Compose([transforms.ToTensor()])
+train_set = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
 train_loader = DataLoader(train_set, batch_size=64, shuffle=True)
+#%%
+#train_set = datasets.ImageFolder(root=folder_path, transform=transform)
+#train_loader = DataLoader(train_set, batch_size=64, shuffle=True)
 #%% Définir la taille du lot (batch size)
 batch_size = 64
 input_dim=28
 kernel_size=4
 stride=2
 latent_dim=49
-(images, labels) = iter(train_loader).next()
+
 class VAE(nn.Module):
     def __init__(self):
         super(VAE, self).__init__()
@@ -99,8 +107,8 @@ image,_ = train_set.__getitem__(random.randint(0,100))
 with torch.no_grad():
     image = image.to(device)
     recon_image, mu, logvar = model(image.unsqueeze(0))
-image = np.reshape(image.numpy(), (128, 128))
-recon_image = np.reshape(recon_image.numpy(), (128, 128))
+image = np.reshape(image.numpy(), (input_dim, input_dim))
+recon_image = np.reshape(recon_image.numpy(), (input_dim, input_dim))
 
 # display the original image and the reconstructed image side-by-side
 fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(8, 4))
