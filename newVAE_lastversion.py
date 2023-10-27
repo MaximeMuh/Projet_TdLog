@@ -24,6 +24,9 @@ batch_size=64
 transform = transforms.Compose([transforms.ToTensor()])
 train_set = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
 train_loader = DataLoader(train_set, batch_size=64, shuffle=True)
+
+test_set = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+train_loader = DataLoader(test_set, batch_size=64, shuffle=True)
 #%%
 #train_set = datasets.ImageFolder(root=folder_path, transform=transform)
 #train_loader = DataLoader(train_set, batch_size=64, shuffle=True)
@@ -51,7 +54,7 @@ class VAE(nn.Module):
         return self.fc21(h1), self.fc22(h1) # returns mean and variance
 
     def reparameterize(self, mu, logvar):
-        std = torch.exp(0.5*logvar)
+        std = torch.exp(0.5*logvar) 
         eps = torch.randn_like(std)
         return eps.mul(std).add(mu) # returns sampled latent variable z
     
@@ -101,11 +104,11 @@ model = VAE()
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
 #%%
-train(model, optimizer, epochs=3, device=device)  
+train(model, optimizer, epochs=10, device=device)  
 #%%
 # convert the tensors to numpy arrays and reshape them into images
 import random
-image,_ = train_set.__getitem__(random.randint(0,100))
+image,_ = test_set.__getitem__(random.randint(0,100))
 with torch.no_grad():
     image = image.to(device)
     recon_image, mu, logvar = model(image.unsqueeze(0))
