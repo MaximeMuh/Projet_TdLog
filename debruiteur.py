@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import random
 
 #%%
-folder_path="C:/Users/maxim/Desktop/tdlog/Projet_TdLog/chattt"
+folder_path="C:/Users/maxim/Desktop/IMI/TDLOG/Projet_TdLog/CAT3"
 
 
 
@@ -28,11 +28,11 @@ transform = transforms.Compose([
 ])
 
 
-batch_size=2
+batch_size=77
 
 
 train_set = datasets.ImageFolder(root=folder_path, transform=transform)
-train_loader = DataLoader(train_set, batch_size=2, shuffle=True)
+train_loader = DataLoader(train_set, batch_size=77, shuffle=True)
 
 #%%
 input_dim=128
@@ -57,7 +57,7 @@ class Debruiteur(nn.Module):
     def bruitage(self,x):
         list_of_index=[[i,j] for i in range(input_dim) for j in range(input_dim)]
         nbr_pix=int((input_dim**2)*alpha/100)
-        for k in range (batch_size):           
+        for k in range (x.size(0)):           
             for i in range(3):
                 pix_to_change=random.sample(list_of_index,nbr_pix)           
                 for j in range (nbr_pix):
@@ -127,13 +127,13 @@ plt.show()
 
 # convert the tensors to numpy arrays and reshape them into images
 import random
-image,_ = train_set.__getitem__(random.randint(0,100))
+image,_ = train_set.__getitem__(random.randint(0,10))
 with torch.no_grad():
     image = image.to(device)
-    recon_image = model(image.unsqueeze(0))
-image = np.reshape(image.numpy())
+    recon_image = model(image.unsqueeze(0))[0]
+image = image.numpy()
 image = np.transpose(image, (1, 2, 0))
-recon_image = np.reshape(recon_image.numpy())
+recon_image = recon_image.numpy()
 recon_image = np.transpose(recon_image, (1, 2, 0))
 
 # display the original image and the reconstructed image side-by-side
