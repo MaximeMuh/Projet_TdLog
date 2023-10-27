@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import random
 
 #%%
-folder_path="C:/Users/maxim/Desktop/tdlog/Projet_TdLog/CAT3"
+folder_path="C:/Users/maxim/Desktop/tdlog/Projet_TdLog/chattt"
 
 
 
@@ -28,11 +28,11 @@ transform = transforms.Compose([
 ])
 
 
-batch_size=64
+batch_size=2
 
 
 train_set = datasets.ImageFolder(root=folder_path, transform=transform)
-train_loader = DataLoader(train_set, batch_size=64, shuffle=True)
+train_loader = DataLoader(train_set, batch_size=2, shuffle=True)
 
 #%%
 input_dim=128
@@ -76,6 +76,7 @@ def train(model, optimizer, epochs, device):
         overall_loss = 0
         u=0
         for batch_idx, (x, _) in enumerate(train_loader):
+            print(x.size())
             x = x.to(device)
             
             optimizer.zero_grad()
