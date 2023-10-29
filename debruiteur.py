@@ -99,35 +99,13 @@ model = Debruiteur()
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
 #%%
 
-train(model, optimizer, epochs=1, device=device)
-#%%
-image,_ = train_set.__getitem__(5)    
-image=image.numpy()
-input_dim=128
-alpha=5
-list_of_index=[[i,j] for i in range(input_dim) for j in range(input_dim)]
-nbr_pix=int((input_dim**2)*alpha/100)
-
-for i in range(3):
-    pix_to_change=random.sample(list_of_index,nbr_pix)
-    
-    for j in range (nbr_pix):
-        image[i][pix_to_change[j][0]][pix_to_change[j][1]]=random.randint(0,255)/255
-
-
-
-
-image= np.transpose(image, (1, 2, 0))
-plt.imshow(image)
-plt.show()
-
-
+train(model, optimizer, epochs=10, device=device)
 
 #%%%
 
 # convert the tensors to numpy arrays and reshape them into images
 import random
-image,_ = train_set.__getitem__(random.randint(0,10))
+image,_ = train_set.__getitem__(random.randint(0,100))
 with torch.no_grad():
     image = image.to(device)
     recon_image = model(image.unsqueeze(0))[0]

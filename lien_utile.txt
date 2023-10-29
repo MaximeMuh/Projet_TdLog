@@ -1,0 +1,14 @@
+https://debuggercafe.com/category/autoencoder-neural-networks/
+
+debruite un texte, vae et tout ce qu’il faut 
+
+https://medium.com/pytorch/implementing-an-au<toencoder-in-pytorch-19baa22647d1
+AE exemple dimplementation
+
+https://scienceetonnante.com/2023/01/13/stable-diffusion/
+texte de la vidéo
+
+https://datasets.activeloop.ai/docs/ml/datasets/animal-animal10n-dataset/
+dataset
+
+
