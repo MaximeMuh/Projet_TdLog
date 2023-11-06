@@ -38,9 +38,9 @@ train_set2 = full_dataset2[:-test_size]
 test_set2 = full_dataset2[-test_size:]
 
 
-train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
+train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=False)
 test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)
-train_loader2 = DataLoader(train_set, batch_size=batch_size, shuffle=True)
+train_loader2 = DataLoader(train_set, batch_size=batch_size, shuffle=False)
 test_loader2 = DataLoader(test_set, batch_size=batch_size, shuffle=False)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu") #pour travailler sur gpu
