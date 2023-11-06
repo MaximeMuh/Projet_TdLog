@@ -9,14 +9,15 @@ Original file is located at
 
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader,random_split
 from torchvision import datasets, transforms
 import torch.optim as optim
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
-from google.colab import drive #à importer si google colab 
+
+#from google.colab import drive #à importer si google colab 
 #%%
 input_dim=128 #taille des données input_dim*input_dim
 batch_size=64 #nombres d'images dans le lot
@@ -32,9 +33,17 @@ transform = transforms.Compose([
     transforms.Resize((input_dim, input_dim)),
     transforms.ToTensor()
 ])
+full_dataset = datasets.ImageFolder(root=folder_path, transform=transform)
 
-train_set = datasets.ImageFolder(root=folder_path, transform=transform)
+
+test_size = int(0.1 * len(full_dataset))
+train_size = len(full_dataset) - test_size
+
+
+train_set, test_set = random_split(full_dataset, [train_size, test_size])
+
 train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
+test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -56,7 +65,8 @@ class VAE(nn.Module):
         self.fc3 = nn.Linear(latent_dim,self.dim2**2)
         self.fc4 = nn.ConvTranspose2d(64,32,kernel_size+1,stride)
         self.fc5 = nn.ConvTranspose2d(32, 3, kernel_size, stride)
-
+#dropout, rajouter couche conv
+#wait and biais 
     def encode(self, x):
         h0=F.relu(self.fc1(x))
         h1 = F.sigmoid(self.fc2(h0))
@@ -111,17 +121,17 @@ optimizer = optim.Adam(model.parameters(), lr=1e-3)
 #model = torch.load('/content/gdrive/My Drive/vacances/vae_24ep.pt', map_location=torch.device('cpu'))#google colab
 model = torch.load('C:/Users/maxim/Desktop/IMI/TDLOG/Projet_TdLog/modele_vae_2layerconv_50ep.pt', map_location=torch.device('cpu'))
 
-
+    
 #%% entrainement du modèle
 train(model, optimizer, epochs=20,device=device)
 #%%Sauvegarde du modèle 
-file_path = "/content/gdrive/My Drive/vacances/vae_2layerconv_50ep.pt" #google colab
+#file_path = "/content/gdrive/My Drive/vacances/vae_2layerconv_50ep.pt" #google colab
 file_path = "C:/Users/maxim/Desktop/IMI/TDLOG/Projet_TdLog/modele_vae_2layerconv_10ep.pt"
 torch.save(model, file_path)
 #%% Affichage de l'image initiale et de l'image en sortie du modèle
 
 import random
-image,_ = train_set.__getitem__(random.randint(0,100))
+image,_ = test_set.__getitem__(random.randint(0,100))
 with torch.no_grad():
     image = image.to(device)
     print(image.size())
@@ -140,5 +150,4 @@ axes[0].set_title("Original")
 axes[1].imshow(recon_image)
 axes[1].set_title("Reconstructed")
 plt.show()
-#%% test visuel
 

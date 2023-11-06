@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader,random_split
 from torchvision import datasets, transforms
 import torch.optim as optim
 import torch
@@ -19,9 +19,16 @@ transform = transforms.Compose([
     transforms.ToTensor()
 ])
 
-train_set = datasets.ImageFolder(root=folder_path, transform=transform)
-train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
+full_dataset = datasets.ImageFolder(root=folder_path, transform=transform)
 
+
+test_size = int(0.1 * len(full_dataset))
+train_size = len(full_dataset) - test_size
+
+train_set, test_set = random_split(full_dataset, [train_size, test_size])
+
+train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
+test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu") #pour travailler sur gpu
 
@@ -92,7 +99,7 @@ optimizer = optim.Adam(model.parameters(), lr=1e-3)
 #%%Entrainement de notre modèle
 train(model, optimizer, epochs=10, device=device)  
 #%%Affichage de l'image initiale et de l'image en sortie du modèle
-image,_ = train_set.__getitem__(random.randint(0,100))
+image,_ = test_set.__getitem__(random.randint(0,100))
 with torch.no_grad():
     image = image.to(device)
     print(image.size())

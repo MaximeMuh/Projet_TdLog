@@ -7,7 +7,7 @@ Created on Thu Oct 26 16:02:38 2023
 #%% importation des modules 
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader,random_split
 from torchvision import datasets, transforms
 import torch.optim as optim
 import torch
@@ -26,11 +26,22 @@ transform = transforms.Compose([
     transforms.Resize((input_dim, input_dim)),
     transforms.ToTensor()
 ])
+full_dataset = datasets.ImageFolder(root=folder_path, transform=transform)
+full_dataset2 = datasets.ImageFolder(root=folder_path_brouille, transform=transform)
+ 
+test_size = len(full_dataset) // 10  
 
-train_set = datasets.ImageFolder(root=folder_path, transform=transform)
-train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=False)
-train_set2 = datasets.ImageFolder(root=folder_path_brouille, transform=transform)
-train_loader2 = DataLoader(train_set2, batch_size=batch_size, shuffle=False)
+
+train_set = full_dataset[:-test_size] 
+test_set = full_dataset[-test_size:]  
+train_set2 = full_dataset2[:-test_size] 
+test_set2 = full_dataset2[-test_size:]
+
+
+train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
+test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False)
+train_loader2 = DataLoader(train_set, batch_size=batch_size, shuffle=True)
+test_loader2 = DataLoader(test_set, batch_size=batch_size, shuffle=False)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu") #pour travailler sur gpu
 
@@ -94,11 +105,14 @@ train(model, optimizer, epochs=50, device=device)
 #%%Sauvegarde de notre modèle
 file_path ="C:/Users/maxim/Desktop/IMI/TDLOG/Projet_TdLog/modele_entraine_debruiteur_32_100e.pt"
 torch.save(model, file_path)
+
+#%%chargement d'un modèle préentrainé 
+model = torch.load('C:/Users/maxim/Desktop/IMI/TDLOG/Projet_TdLog/modele_entraine_debruiteur_32_100e.pt', map_location=torch.device('cpu'))
 #%% Affichage de l'image initiale et de l'image en sortie du modèle
 
 a=random.randint(0,100)
-image,_ = train_set.__getitem__(a)
-image_bruit,_=train_set2.__getitem__(a)
+image,_ = test_set.__getitem__(a)
+image_bruit,_=test_set2.__getitem__(a)
 with torch.no_grad():
     image = image.to(device)
     recon_image = model(image.unsqueeze(0))[0]
