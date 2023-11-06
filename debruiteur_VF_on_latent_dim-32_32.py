@@ -4,7 +4,7 @@ Created on Thu Oct 26 16:02:38 2023
 
 @author: maxim
 """
-
+#%% importation des modules 
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
@@ -15,90 +15,30 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 
-#%%
+#%%Importation des données brouillées et non brouillées  
 folder_path="C:/Users/maxim/Desktop/IMI/TDLOG/Projet_TdLog/image_32_32"
 folder_path_brouille="C:/Users/maxim/Desktop/IMI/TDLOG/Projet_TdLog/image_32_32_brouille"
-alpha=5
-input_dim=32
-def bruit(x):
-    for k in range (x.size(0)):           
-        for i in range(3):
-            for j in range (input_dim):
-                for h in range (input_dim):
-                    x[k][i][j][h]=(random.randint(0,255)/255)*alpha/100
-                    +(100-alpha)*x[k][i][j][h]/100
 
-# Utiliser torchvision.datasets.ImageFolder pour charger les images
-# et appliquer des transformations
+input_dim=32 #taille des données input_dim*input_dim
+batch_size=77 #nombres d'images dans le lot
+
 transform = transforms.Compose([
-    transforms.Resize((32, 32)),
+    transforms.Resize((input_dim, input_dim)),
     transforms.ToTensor()
 ])
 
-
-batch_size=77
-
-
 train_set = datasets.ImageFolder(root=folder_path, transform=transform)
-train_loader = DataLoader(train_set, batch_size=77, shuffle=False)
+train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=False)
 train_set2 = datasets.ImageFolder(root=folder_path_brouille, transform=transform)
-train_loader2 = DataLoader(train_set2, batch_size=77, shuffle=False)
+train_loader2 = DataLoader(train_set2, batch_size=batch_size, shuffle=False)
 
-import random
-image,_ = train_set.__getitem__(100)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu") #pour travailler sur gpu
 
-image = image.numpy()
-image = np.transpose(image, (1, 2, 0))
-image2,_ = train_set2.__getitem__(100)
-
-image2 = image2.numpy()
-image2 = np.transpose(image2, (1, 2, 0))
-
-# display the original image and the reconstructed image side-by-side
-
-plt.imshow(image)
-plt.show()
-plt.imshow(image2)
-plt.show()
-
-
-#%%
-k=0
-it=iter(train_loader)
-
-#%%
-for batch_idx, (x, _) in enumerate(train_loader2):
-    
-    y=next(it)[0]
-    print(x.size())
-    print(y.size())
-    
-    image=x[1]
-    image2=y[1]
-    image = image.numpy()
-    image = np.transpose(image, (1, 2, 0))
-
-
-    image2 = image2.numpy()
-    image2 = np.transpose(image2, (1, 2, 0))
-
-    # display the original image and the reconstructed image side-by-side
-
-    plt.imshow(image)
-    plt.show()
-    plt.imshow(image2)
-    plt.show()
-    
-
-#%%
-
-
-
-#%%
-input_dim=32
+#%% Création de notre modèle de débrouillage
+#définitions des variables de nos réseaux de  neurones
 kernel_size=4
 stride=2
-input_conv=3
+input_conv=3 #R G B 
 
 class Debruiteur(nn.Module):
     def __init__(self):
@@ -145,21 +85,17 @@ def train(model, optimizer, epochs, device):
         print("Epoch", epoch + 1, "Average Loss:", overall_loss / (batch_idx * batch_size))
     return overall_loss
 
-#%%
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+#%%Création d'une instance de notre classe 
 model = Debruiteur()
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
-#%%
-
+#%%Entrainenement de notre modèle
 train(model, optimizer, epochs=50, device=device)
 
-#%%%
+#%%Sauvegarde de notre modèle
 file_path ="C:/Users/maxim/Desktop/IMI/TDLOG/Projet_TdLog/modele_entraine_debruiteur_32_100e.pt"
 torch.save(model, file_path)
-      #%%
-# convert the tensors to numpy arrays and reshape them into images
-import random
+#%% Affichage de l'image initiale et de l'image en sortie du modèle
+
 a=random.randint(0,100)
 image,_ = train_set.__getitem__(a)
 image_bruit,_=train_set2.__getitem__(a)
@@ -173,7 +109,6 @@ image_bruit = np.transpose(image_bruit, (1, 2, 0))
 recon_image = recon_image.numpy()
 recon_image = np.transpose(recon_image, (1, 2, 0))
 
-# display the original image and the reconstructed image side-by-side
 fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(8, 4))
 axes[0].imshow(image)
 axes[0].set_title("Original")

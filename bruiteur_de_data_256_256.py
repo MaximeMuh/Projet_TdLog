@@ -20,7 +20,7 @@ input_dim=256
 transform = transforms.Compose([
     transforms.ToTensor()
 ])
-# Define your noise function
+
 def bruit(x):        
         for i in range(3):
             for j in range (x.size(1)):
@@ -31,28 +31,13 @@ def bruit(x):
 folder_path="C:/Users/maxim/Desktop/IMI/TDLOG/Projet_TdLog/CAT3"
 train_set = datasets.ImageFolder(root=folder_path, transform=transform)
 train_loader = DataLoader(train_set, batch_size=77, shuffle=False)
-image,_ = train_set.__getitem__(random.randint(0,100))
-print(image.size())
-image = np.transpose(image, (1, 2, 0))
-plt.imshow(image)
-plt.show()
 
-image = np.transpose(image, (2, 0, 1))
-bruit(image)
-
-image = image.numpy()
-
-image = np.transpose(image, (1, 2, 0))
-plt.imshow(image)
-plt.show()
 
 #%%
-
-# Paths
 original_folder_path = 'C:/Users/maxim/Desktop/IMI/TDLOG/Projet_TdLog/CAT3'
 noisy_folder_path = 'C:/Users/maxim/Desktop/IMI/TDLOG/Projet_TdLog/CATBRUIT'
 
-# Create a copy of the original dataset and apply noise
+
 if not os.path.exists(noisy_folder_path):
     os.makedirs(noisy_folder_path)
 
@@ -71,15 +56,13 @@ for class_dir in os.listdir(original_folder_path):
         
         image = Image.open(image_path)
         
-        # Convert the image to a PyTorch tensor
+        
         image = transforms.ToTensor()(image)
         bruit(image)
         image = image.numpy()
         image = (image * 255).astype(np.uint8)
         image = Image.fromarray(image.transpose(1, 2, 0))
-        
-
-        # Save the noisy image
+    
         image.save(noisy_image_path)
 
-# Now, 'noisy_folder_path' contains a copy of your dataset with noisy images.
+

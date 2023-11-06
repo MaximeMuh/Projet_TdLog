@@ -6,57 +6,51 @@ import torch.optim as optim
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
-#%% 
+import random
+#%% Importation des données
     
 folder_path = "C:/Users/maxim/Desktop/IMI/TDLOG/Projet_TdLog/CAT3"
 
-# Utiliser torchvision.datasets.ImageFolder pour charger les images
-# et appliquer des transformations
+input_dim=128 #taille des données input_dim*input_dim
+batch_size=64 #nombres d'images dans le lot
+
 transform = transforms.Compose([
-    transforms.Resize((128, 128)),
+    transforms.Resize((input_dim, input_dim)),
     transforms.ToTensor()
 ])
 
-# transform = transforms.Compose([transforms.ToTensor()])
-# train_set = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
-# train_loader = DataLoader(train_set, batch_size=64, shuffle=True)
-
-# test_set = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
-# train_loader = DataLoader(test_set, batch_size=64, shuffle=True)
-#%%
 train_set = datasets.ImageFolder(root=folder_path, transform=transform)
-train_loader = DataLoader(train_set, batch_size=64, shuffle=True)
-#%% Définir la taille du lot (batch size)
-batch_size = 64
-input_dim=28
+train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
+
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu") #pour travailler sur gpu
+
+#%% Définition de notre modèle encodeur-décodeur
 kernel_size=4
 stride=2
-latent_dim=20
+latent_dim=1024
 
 class VAE(nn.Module):
     def __init__(self):
         super(VAE, self).__init__()
         self.fc1 = nn.Conv2d(3,32,kernel_size,stride)
-#        self.fc2 = nn.Conv2d(32,64,4,2)
-        self.fc21 = nn.Linear(int(((input_dim-kernel_size)/stride+1)**2),latent_dim) # mean
-        self.fc22 = nn.Linear(int(((input_dim-kernel_size)/stride+1)**2),latent_dim) # variance
+        self.fc21 = nn.Linear(int(((input_dim-kernel_size)/stride+1)**2),latent_dim) # moyenne
+        self.fc22 = nn.Linear(int(((input_dim-kernel_size)/stride+1)**2),latent_dim) # logvariance
         self.fc3 = nn.Linear(latent_dim,int(((input_dim-kernel_size)/stride+1)**2))
         self.fc4 = nn.ConvTranspose2d(32, 3, kernel_size, stride)
 
     def encode(self, x):
         h1 = F.sigmoid(self.fc1(x))
-        # h1 = h1.view()
         h1 = h1.view(h1.size(0),h1.size(1),1,-1)
-        return self.fc21(h1), self.fc22(h1) # returns mean and variance
+        return self.fc21(h1), self.fc22(h1) #retourne moyenne et logvariance
 
     def reparameterize(self, mu, logvar):
         std = torch.exp(0.5*logvar) 
         eps = torch.randn_like(std)
-        return eps.mul(std).add(mu) # returns sampled latent variable z
+        return eps.mul(std).add(mu) 
     
     def decode(self, z):
-#        h3 = F.relu(self.fc3(z))
-        return torch.sigmoid(self.fc4(z)) # returns reconstructed image
+        return torch.sigmoid(self.fc4(z)) # retourne l'image décodé 
 
     def forward(self, x):
         mu, logvar = self.encode(x)
@@ -71,8 +65,6 @@ def loss_function(x,recon_x , mu, logvar):
     BCE = F.binary_cross_entropy(recon_x, x, reduction='sum')
     KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
     return BCE + KLD
-
-#%%
 
 def train(model, optimizer, epochs, device):
     model.train()
@@ -93,18 +85,13 @@ def train(model, optimizer, epochs, device):
 
         print("Epoch", epoch + 1, "Average Loss:", overall_loss / (batch_idx * batch_size))
     return overall_loss
-#%%
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+#%%Création d'une instance de notre classe VAE et définition de l'optimiseur
 model = VAE()
-#%%
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
 
-#%%
+#%%Entrainement de notre modèle
 train(model, optimizer, epochs=10, device=device)  
-#%%
-# convert the tensors to numpy arrays and reshape them into images
-import random
+#%%Affichage de l'image initiale et de l'image en sortie du modèle
 image,_ = train_set.__getitem__(random.randint(0,100))
 with torch.no_grad():
     image = image.to(device)
@@ -124,4 +111,4 @@ axes[0].set_title("Original")
 axes[1].imshow(recon_image)
 axes[1].set_title("Reconstructed")
 plt.show()
-#%% test visuel
+

@@ -16,31 +16,30 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
-from google.colab import drive
+from google.colab import drive #à importer si google colab 
+#%%
+input_dim=128 #taille des données input_dim*input_dim
+batch_size=64 #nombres d'images dans le lot
 
-drive.mount('/content/gdrive')
+#google colab
+#drive.mount('/content/gdrive')
+#folder_path = "/content/gdrive/My Drive/vacances/CAT3"
 
-folder_path = "/content/gdrive/My Drive/vacances/CAT3"
+#sinon
+folder_path = "C:/Users/maxim/Desktop/IMI/TDLOG/Projet_TdLog/CAT3"
 
 transform = transforms.Compose([
-    transforms.Resize((128, 128)),
+    transforms.Resize((input_dim, input_dim)),
     transforms.ToTensor()
 ])
 
+train_set = datasets.ImageFolder(root=folder_path, transform=transform)
+train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True)
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-#%%
-train_set = datasets.ImageFolder(root=folder_path, transform=transform)
-train_loader = DataLoader(train_set, batch_size=64, shuffle=True)
-#%% Définir la taille du lot (batch size)
-batch_size = 64
-input_dim=128
-kernel_size=4
-stride=2
-latent_dim=1024
+#%%#%% Définition de notre modèle encodeur-décodeur
 
-batch_size = 64
-input_dim=128
 kernel_size=4
 stride=2
 latent_dim=1024
@@ -61,18 +60,18 @@ class VAE(nn.Module):
     def encode(self, x):
         h0=F.relu(self.fc1(x))
         h1 = F.sigmoid(self.fc2(h0))
-        # h1 = h1.view()
+        
         h1 = h1.view(h1.size(0),h1.size(1),1,-1)
-        return self.fc21(h1), self.fc22(h1) # returns mean and variance
+        return self.fc21(h1), self.fc22(h1) 
 
     def reparameterize(self, mu, logvar):
         std = torch.exp(0.5*logvar)
         eps = torch.randn_like(std)
-        return eps.mul(std).add(mu) # returns sampled latent variable z
+        return eps.mul(std).add(mu) 
 
     def decode(self, z):
         h3 = F.relu(self.fc4(z))
-        return F.sigmoid(self.fc5(h3)) # returns reconstructed image
+        return F.sigmoid(self.fc5(h3))
 
     def forward(self, x):
         mu, logvar = self.encode(x)
@@ -85,8 +84,6 @@ def loss_function(x,recon_x , mu, logvar):
     BCE = F.binary_cross_entropy(recon_x, x, reduction='sum')
     KLD = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
     return BCE + KLD
-
-#%%
 
 def train(model, optimizer, epochs, device):
     model.train()
@@ -107,22 +104,22 @@ def train(model, optimizer, epochs, device):
 
         print("Epoch", epoch + 1, "Average Loss:", overall_loss / (batch_idx * batch_size))
     return overall_loss
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+#%%création d'une instance de notre classe de réseaux de neurones
 model = VAE().to(device)
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
+#%%chargement d'un modèle pré entrainé
+#model = torch.load('/content/gdrive/My Drive/vacances/vae_24ep.pt', map_location=torch.device('cpu'))#google colab
+model = torch.load('C:/Users/maxim/Desktop/IMI/TDLOG/Projet_TdLog/modele_vae_2layerconv_50ep.pt', map_location=torch.device('cpu'))
 
-model = torch.load('/content/gdrive/My Drive/vacances/vae_24ep.pt', map_location=torch.device('cpu'))
 
-
-
+#%% entrainement du modèle
 train(model, optimizer, epochs=20,device=device)
-
-file_path = "/content/gdrive/My Drive/vacances/vae_2layerconv_50ep.pt"
+#%%Sauvegarde du modèle 
+file_path = "/content/gdrive/My Drive/vacances/vae_2layerconv_50ep.pt" #google colab
+file_path = "C:/Users/maxim/Desktop/IMI/TDLOG/Projet_TdLog/modele_vae_2layerconv_10ep.pt"
 torch.save(model, file_path)
+#%% Affichage de l'image initiale et de l'image en sortie du modèle
 
-# convert the tensors to numpy arrays and reshape them into images
 import random
 image,_ = train_set.__getitem__(random.randint(0,100))
 with torch.no_grad():
