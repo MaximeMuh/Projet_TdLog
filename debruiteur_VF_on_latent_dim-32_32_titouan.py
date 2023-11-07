@@ -6,6 +6,7 @@ import torch.optim as optim
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import random
 
 #%%Importation des données brouillées et non brouillées  
@@ -29,7 +30,7 @@ subset_indices = [i for i, (_, label) in enumerate(train_set) if label == 0]
 subset_init = Subset(train_set, subset_indices)
 
 
-train_size = int(0.8 * len(subset_init))
+train_size = int(0.8 * len(subset_init) - 0.8 * len(subset_init) % batch_size)
 label_subset_init_train = [i for i in range(train_size)]
 label_subset_init_test = [i for i in range(train_size,len(subset_init))]
   
@@ -45,12 +46,12 @@ loader_init_test = DataLoader(subset_init_test, batch_size=64, shuffle=False)
 subset_indices = [i for i, (_, label) in enumerate(train_set) if label == 1]
 subset_bruit = Subset(train_set, subset_indices)
 
-train_size = int(0.8 * len(subset_bruit))
+train_size = int(0.8 * len(subset_bruit) - 0.8 * len(subset_bruit) % batch_size)
 label_subset_bruit_train = [i for i in range(train_size)]
 label_subset_bruit_test = [i for i in range(train_size,len(subset_bruit))]
 
-subset_init_test =  Subset(subset_bruit, label_subset_bruit_test)
-subset_init = Subset(subset_bruit, label_subset_bruit_train)
+subset_bruit_test =  Subset(subset_bruit, label_subset_bruit_test)
+subset_bruit = Subset(subset_bruit, label_subset_bruit_train)
 
 
 # Créez un DataLoader3 pour ce Subset ------ Images bruitées
@@ -147,27 +148,45 @@ def loss_function(x,x_recon):
     BCE = F.binary_cross_entropy(x_recon, x, reduction='sum')
     return BCE
 def train(model, optimizer, epochs, device):
+    Y1=[]
+    Y2=[]
     model.train()
     for epoch in range(epochs):
         overall_loss = 0
+        overall_loss_test = 0
         u=0
         it=iter(loader_init)
+        it_test = iter(loader_init_test)
         for batch_idx, (x_bruit, _) in enumerate(loader_bruit):
             x_init= next(it)[0]
-            
             x_init = x_init.to(device)
             x_bruit = x_bruit.to(device)
             optimizer.zero_grad()
             x_recons = model(x_bruit)
-            
             loss = loss_function(x_init, x_recons)
             overall_loss += loss.item()
-            if u%5000==0:
-                print(batch_idx/len(train_loader), overall_loss)
+            
+            #if u%5000==0:
+           #     print(batch_idx/len(train_loader), overall_loss)
             loss.backward()
             optimizer.step()
-
         print("Epoch", epoch + 1, "Average Loss:", overall_loss / (batch_idx * batch_size))
+        print(batch_idx)
+        Y1.append((overall_loss)/(batch_idx * batch_size))
+        for batch_idx, (x_bruit, _) in enumerate(loader_bruit_test):
+            x_init= next(it_test)[0]
+            x_init = x_init.to(device)
+            x_bruit = x_bruit.to(device)
+            x_recons = model(x_bruit)
+            loss = loss_function(x_init, x_recons)
+            overall_loss_test += loss.item()
+        Y2.append((overall_loss_test)/(batch_idx * batch_size))
+        print(batch_idx)
+    X=np.linspace(0, epochs, epochs)
+    plt.plot(X,Y1, label = "training")
+    plt.plot(X,Y2, label = " test")
+    plt.legend()
+    plt.show()
     return overall_loss
 
 #%%Création d'une instance de notre classe 
@@ -175,10 +194,10 @@ model = Debruiteur_lin()
 #%%
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
 #%%Entrainenement de notre modèle
-train(model, optimizer, epochs=50, device=device)
+train(model, optimizer, epochs=15, device=device)
 
 #%%Sauvegarde de notre modèle
-file_path ="C:/Users/maxim/Desktop/IMI/TDLOG/Projet_TdLog/modele_entraine_debruiteur_32_100e.pt"
+file_path ="C:/Users/maxim/Desktop/IMI/TDLOG/Projet_TdLog/modele_entraine_debruiteur_lineaire_32_40e.pt"
 torch.save(model, file_path)
 #%%
 file_path = "C:/Users/titou/Fichiers Infos/Python/tdlog_proj/Projet_TdLog/modele_entraine_debruiteur_32_100e.pt"
@@ -190,7 +209,7 @@ image,_ = subset_init.__getitem__(a)
 image_bruit,_=subset_bruit.__getitem__(a)
 with torch.no_grad():
     image = image.to(device)
-    recon_image = model(model(image_bruit.unsqueeze(0)))[0]
+    recon_image = model(image_bruit.unsqueeze(0))[0]
 image = image.numpy()
 image = np.transpose(image, (1, 2, 0))
 image_bruit = image_bruit.numpy()
