@@ -97,9 +97,12 @@ def loss_function(x,recon_x , mu, logvar):
 
 def train(model, optimizer, epochs, device):
     model.train()
+    loss_train_per_epoch=[]
+    loss_test_per_epoch=[]
     for epoch in range(epochs):
         overall_loss = 0
         u=0
+        
         for batch_idx, (x, _) in enumerate(train_loader):
             x = x.to(device)
             optimizer.zero_grad()
@@ -111,8 +114,26 @@ def train(model, optimizer, epochs, device):
                 print(batch_idx/len(train_loader), overall_loss)
             loss.backward()
             optimizer.step()
+        average_loss=overall_loss / (batch_idx * batch_size)
+        loss_train_per_epoch.append(average_loss)
+        loss_test_per_epoch.append(test_loss(test_loader,model))
+        print("Epoch", epoch + 1, "Average Loss:", average_loss)
+    X=[k for k in range(epochs)]
+    plt.plot(X,loss_train_per_epoch)
+    plt.plot(X,loss_test_per_epoch)
+    plt.show()
+    return overall_loss
 
-        print("Epoch", epoch + 1, "Average Loss:", overall_loss / (batch_idx * batch_size))
+#%%fonction de cout pour la base de données test
+def test_loss(test,mod):
+    overall_loss = 0
+    for batch_idx, (x, _) in enumerate(test):
+        x = x.to(device)
+        optimizer.zero_grad()
+        x_hat, mean, log_var = mod(x)
+
+        loss = loss_function(x, x_hat, mean, log_var)
+        overall_loss += loss.item()
     return overall_loss
 #%%création d'une instance de notre classe de réseaux de neurones
 model = VAE().to(device)
@@ -123,7 +144,7 @@ model = torch.load('C:/Users/maxim/Desktop/IMI/TDLOG/Projet_TdLog/modele_vae_2la
 
     
 #%% entrainement du modèle
-train(model, optimizer, epochs=20,device=device)
+train(model, optimizer, epochs=2,device=device)
 #%%Sauvegarde du modèle 
 #file_path = "/content/gdrive/My Drive/vacances/vae_2layerconv_50ep.pt" #google colab
 file_path = "C:/Users/maxim/Desktop/IMI/TDLOG/Projet_TdLog/modele_vae_2layerconv_10ep.pt"
@@ -150,4 +171,20 @@ axes[0].set_title("Original")
 axes[1].imshow(recon_image)
 axes[1].set_title("Reconstructed")
 plt.show()
+#%%
 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    

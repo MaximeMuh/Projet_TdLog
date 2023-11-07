@@ -36,7 +36,7 @@ def unpickle(file):
 
 
 file = "C:/Users/maxim/Desktop/Imagenet32_train/train_data_batch_1"
-noisy_path="C:/Users/maxim/Desktop/IMI/TDLOG/Projet_TdLog/image_32_32/image"
+noisy_path="C:/Users/maxim/Desktop/IMI/TDLOG/Projet_TdLog/image_32_32_brouille/3/image"
 
 loaded_data=unpickle(file)
 my_dataset = MyDataset(data=loaded_data, transform=None)
@@ -65,13 +65,13 @@ image = Image.fromarray(image.transpose(1, 2, 0))
 image.save(noisy_path)
 
 #%%copie des images brouillées
-u=0
-for k in range (len(my_dataset)):
+u=7070
+for k in range (7070,len(my_dataset)):
     image,_ = my_dataset.__getitem__(k)
     u+=1
     image=image.reshape(3,32,32)
+    bruit(image)
     from PIL import Image
     image = Image.fromarray(image.transpose(1, 2, 0))
     image.save(noisy_path+f"{u}"+".png")
-    if u>7070:
-        pass
+    
