@@ -4,7 +4,7 @@ Created on Thu Oct 26 16:02:38 2023
 
 @author: maxim
 """
-#%% importation des modules 
+#%% importation des modulesss 
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader,random_split
